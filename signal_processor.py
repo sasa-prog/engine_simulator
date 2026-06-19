@@ -13,19 +13,6 @@ def process_engine(
 ):
     t = np.arange(len(rpm_interp)) / sr
 
-    idle_noise = (
-        3*np.sin(2*np.pi*1.2*t)
-        + np.sin(2*np.pi*3.1*t)
-    )
-
-    idle_gain = np.interp(
-        rpm_interp,
-        [800, 4500],
-        [0.6, 0.0]
-    )
-
-    # rpm_interp += idle_noise * idle_gain
-
     window = int(sr * 0.02)  # 20msくらい
     kernel = np.ones(window) / window
     rpm_interp = np.convolve(
@@ -39,8 +26,6 @@ def process_engine(
     limiter = 4000
     rpm_interp = smoothing_rpm(rpm_interp, sr, limiter)
 
-    # idle_jitter = 10 * np.sin(2*np.pi*1.5*t)
-    # rpm_interp += idle_jitter * (rpm_interp < 1200)
 
     cycle_freq = rpm_interp / 120      # 720°サイクルの周波数
     cycle_phase = 4*np.pi * np.cumsum(cycle_freq) / sr
@@ -74,14 +59,12 @@ def process_engine(
     for ang in left_angles:
         d = np.angle(np.exp(1j*(cycle_phase-ang)))
         left_impulse += np.exp(-(d/width)**2)
-        # left_impulse += (np.abs(d) < width).astype(float)
 
     right_impulse = np.zeros_like(cycle_phase)
 
     for ang in right_angles:
         d = np.angle(np.exp(1j*(cycle_phase-ang)))
         right_impulse += np.exp(-(d/width)**2)
-        # right_impulse += (np.abs(d) < width).astype(float)
 
 
     cutoff_left = 1000
@@ -128,10 +111,7 @@ def process_engine(
     )
 
     engine *= gain
-    stereo = np.column_stack([
-        left,
-        right
-    ])
+
     sf.write("left.wav", left, int(sr))
     sf.write("right.wav", left, int(sr))
 
@@ -141,9 +121,6 @@ def effect_engine(engine: np.ndarray, rpm_interp: np.ndarray, phase: np.ndarray,
     peak = np.max(np.abs(engine))
     if peak > 0:
         engine /= peak
-
-
-
 
     b1, a1 = iirpeak(120/(sr/2), Q=3)
 
@@ -159,12 +136,6 @@ def effect_engine(engine: np.ndarray, rpm_interp: np.ndarray, phase: np.ndarray,
         engine
     ))
 
-    sos = butter(
-    2,
-    [800/(sr/2), 3500/(sr/2)],
-    btype='band',
-    output='sos'
-    )
     intake = (
         np.sin(2*phase)
         + 0.5*np.sin(3*phase)
@@ -199,5 +170,4 @@ def normalize_engine(engine: np.ndarray, rpm_interp: np.ndarray, sr: int | float
     )
 
     engine = np.asarray(sosfilt(sos, engine))
-    # engine /= np.max(np.abs(engine))
     return engine
