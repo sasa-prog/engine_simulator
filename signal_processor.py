@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from engine_simulator.audio_utils import smoothing_rpm, lowpass, resonator
+from audio_utils import smoothing_rpm, lowpass, resonator
 from scipy.signal import lfilter, iirpeak, butter, sosfilt
-from engine_simulator.audio_utils import bandpass
-from engine_simulator.effects import exhaust_reflect
+from audio_utils import bandpass
+from effects import exhaust_reflect
 import soundfile as sf
 
 def process_engine(

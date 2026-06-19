@@ -1,8 +1,8 @@
 import librosa
 import numpy as np
 import matplotlib.pyplot as plt
-from engine_simulator.signal_processor import process_engine, effect_engine, normalize_engine
-from engine_simulator.audio_utils import calculate_rpm
+from signal_processor import process_engine, effect_engine, normalize_engine
+from audio_utils import calculate_rpm
 import soundfile as sf
 
 

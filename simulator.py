@@ -1,6 +1,6 @@
-from engine_simulator.engine_simulator import simulate_rpm
+from engine_simulator import simulate_rpm
 import numpy as np
-from engine_simulator.signal_processor import process_engine, effect_engine, normalize_engine
+from signal_processor import process_engine, effect_engine, normalize_engine
 import soundfile as sf
 import pygame
 import numpy as np
