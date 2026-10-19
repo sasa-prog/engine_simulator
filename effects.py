@@ -1,6 +1,7 @@
 import numpy as np
 
 def exhaust_reflect(x, sr, rpm_interp):
+    """Add RPM-dependent delayed reflections to an exhaust signal."""
     y = x.copy()
     gain = np.interp(
         rpm_interp.mean(),

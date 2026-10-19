@@ -5,6 +5,7 @@ from simulator import update_rpm
 
 
 def test_update_rpm_stays_within_engine_limits():
+    """RPM acceleration remains inside the configured engine limits."""
     rpm = 800.0
     for _ in range(120):
         rpm = update_rpm(rpm, throttle=1.0, dt=1 / 60)
@@ -13,6 +14,7 @@ def test_update_rpm_stays_within_engine_limits():
 
 
 def test_interpolate_controls_returns_audio_length():
+    """Control interpolation produces finite arrays matching audio length."""
     rpm = np.array([800.0, 1200.0, 2000.0])
     rms = np.array([0.3, 0.5, 0.8])
 

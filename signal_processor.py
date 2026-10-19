@@ -11,6 +11,7 @@ def process_engine(
     rms_interp: np.ndarray,
     sr: int | float
 ):
+    """Generate the stereo engine signal and its processed phase data."""
     t = np.arange(len(rpm_interp)) / sr
 
     window = int(sr * 0.02)  # 20msくらい
@@ -118,6 +119,7 @@ def process_engine(
     return (engine, rpm_interp, cycle_phase)
 
 def effect_engine(engine: np.ndarray, rpm_interp: np.ndarray, phase: np.ndarray, sr: int | float):
+    """Apply resonant, intake, and fade effects to an engine signal."""
     peak = np.max(np.abs(engine))
     if peak > 0:
         engine /= peak
@@ -161,6 +163,7 @@ def effect_engine(engine: np.ndarray, rpm_interp: np.ndarray, phase: np.ndarray,
     return engine
 
 def normalize_engine(engine: np.ndarray, rpm_interp: np.ndarray, sr: int | float):
+    """Apply the final low-pass filter used for engine normalization."""
 
     sos = butter(
         4,

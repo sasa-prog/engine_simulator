@@ -34,6 +34,7 @@ def synthesize(input_path: str = "voice.mp3", output_path: str = "engine.wav") -
 
 
 def main() -> None:
+    """Run the default STFT harmonic synthesis experiment."""
     synthesize()
 
 

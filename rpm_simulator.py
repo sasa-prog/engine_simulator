@@ -43,6 +43,7 @@ def simulate_interactive(fps: int = FPS) -> np.ndarray:
 
 
 def main() -> None:
+    """Run the standalone interactive RPM simulator."""
     simulate_interactive()
 
 

@@ -60,6 +60,7 @@ def plot_rpm(rpm: np.ndarray) -> None:
 
 
 def main() -> None:
+    """Run the audio-driven engine synthesis workflow."""
     input_path = "./silen2.mp3"
     output_path = "engine.wav"
     y, sr = load_audio(input_path)

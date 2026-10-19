@@ -3,6 +3,7 @@ import librosa
 from scipy.signal import iirpeak, butter, lfilter, sosfilt
 
 def smoothing_rpm(rpm_interp: np.ndarray, sr: int | float, limit: int = 2700):
+    """Limit how quickly the interpolated RPM can decrease."""
     max_drop = 2700  # rpm/s
 
     for i in range(1, len(rpm_interp)):
@@ -16,6 +17,7 @@ def smoothing_rpm(rpm_interp: np.ndarray, sr: int | float, limit: int = 2700):
     return rpm_interp
 
 def calculate_rpm(f0: np.ndarray, y: np.ndarray):
+    """Estimate RPM and RMS envelopes from pitch and waveform samples."""
     # RPMの計算
     rpm_f0 = 1500 + 35 * f0
     hop_length = 512
@@ -29,6 +31,7 @@ def calculate_rpm(f0: np.ndarray, y: np.ndarray):
     return (0.3 * rpm_f0 + 0.7 * rpm_rms, rms)
 
 def lowpass(x, cutoff, sr, order=4):
+    """Apply a low-pass Butterworth filter to a signal."""
     sos = butter(
         order,
         cutoff,
@@ -40,6 +43,7 @@ def lowpass(x, cutoff, sr, order=4):
 
 
 def resonator(x, freq, decay, sr):
+    """Apply a decaying resonator at the requested frequency."""
     y = np.zeros_like(x)
 
     r = np.exp(-decay/sr)
@@ -58,6 +62,7 @@ def resonator(x, freq, decay, sr):
     return y
 
 def highpass(x, cutoff, sr, order=4):
+    """Apply a high-pass Butterworth filter to a signal."""
     sos = butter(
         order,
         cutoff,
@@ -68,6 +73,7 @@ def highpass(x, cutoff, sr, order=4):
     return sosfilt(sos, x)
 
 def bandpass(x, lowcut, highcut, sr, order=4):
+    """Apply a band-pass Butterworth filter to a signal."""
     sos = butter(
         order,
         [lowcut, highcut],

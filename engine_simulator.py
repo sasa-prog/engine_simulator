@@ -1,6 +1,7 @@
 import numpy as np
 
 def simulate_rpm(duration, sr):
+    """Generate a demonstration RPM curve from scheduled throttle input."""
     t = np.arange(int(duration * sr)) / sr
 
     throttle = np.zeros_like(t)

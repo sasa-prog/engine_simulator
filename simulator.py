@@ -91,6 +91,7 @@ def plot_spectrogram(engine: np.ndarray, sr: int = SAMPLE_RATE) -> None:
 
 
 def main() -> None:
+    """Run the interactive simulation and save its generated audio."""
     rpm_history = simulate_interactive()
     engine, _ = synthesize_engine(rpm_history)
     sf.write("simulator.wav", engine, SAMPLE_RATE)
