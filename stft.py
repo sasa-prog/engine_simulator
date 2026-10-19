@@ -1,43 +1,41 @@
 import librosa
-
-y, sr = librosa.load("voice.mp3", sr=None)
-
-print(sr)      # サンプリング周波数
-print(y.shape) # サンプル数
-D = librosa.stft(y)
-
-print(D.shape)
-
-import matplotlib.pyplot as plt
-import librosa.display
-
-# S_db = librosa.amplitude_to_db(abs(D))
-
-# librosa.display.specshow(
-#     S_db,
-#     sr=sr,
-#     x_axis='time',
-#     y_axis='hz'
-# )
-
-# plt.colorbar()
-# plt.show()
-
-S = abs(D)
-phase = D / (S + 1e-8)
-S_engine = S.copy()
-
-n_freq = S.shape[0]
-
-for harmonic in range(2, 6):
-    target = S_engine[harmonic::harmonic]
-    n = target.shape[0]
-
-    target += 0.3 * S[:n]
-D_new = S_engine * phase
-
-y_new = librosa.istft(D_new)
-
+import numpy as np
 import soundfile as sf
 
-sf.write("engine.wav", y_new, int(sr))
+
+def load_stft(input_path: str) -> tuple[np.ndarray, int, np.ndarray]:
+    """Load an audio file and return its waveform, sample rate, and STFT."""
+    y, sr = librosa.load(input_path, sr=None)
+    return y, sr, librosa.stft(y)
+
+
+def add_harmonics(spectrum: np.ndarray, harmonic_count: int = 5) -> np.ndarray:
+    """Add harmonics to an STFT magnitude while preserving its phase."""
+    magnitude = np.abs(spectrum)
+    phase = spectrum / (magnitude + 1e-8)
+    modified_magnitude = magnitude.copy()
+
+    for harmonic in range(2, harmonic_count + 1):
+        target = modified_magnitude[harmonic::harmonic]
+        source = magnitude[:target.shape[0]]
+        target += 0.3 * source
+
+    return modified_magnitude * phase
+
+
+def synthesize(input_path: str = "voice.mp3", output_path: str = "engine.wav") -> None:
+    """Create a harmonic-enhanced waveform from an input audio file."""
+    y, sr, spectrum = load_stft(input_path)
+    print(sr)
+    print(y.shape)
+    modified_spectrum = add_harmonics(spectrum)
+    y_new = librosa.istft(modified_spectrum)
+    sf.write(output_path, y_new, int(sr))
+
+
+def main() -> None:
+    synthesize()
+
+
+if __name__ == "__main__":
+    main()

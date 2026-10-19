@@ -1,132 +1,101 @@
-from engine_simulator import simulate_rpm
-import numpy as np
-from signal_processor import process_engine, effect_engine, normalize_engine
-import soundfile as sf
-import pygame
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pygame
+import soundfile as sf
 from scipy.signal import spectrogram
 
-sr = 44100
-fps = 60
-duration = 10  # 10秒録音
+from signal_processor import effect_engine, process_engine
 
-pygame.init()
-screen = pygame.display.set_mode((300, 100))
-clock = pygame.time.Clock()
+SAMPLE_RATE = 44100
+FPS = 60
+DURATION = 10
+MIN_RPM = 800
+MAX_RPM = 7300
 
-rpm = 800.0
-rpm_history = []
 
-running = True
-elapsed = 0.0
-
-while running and elapsed < duration:
-    dt = clock.tick(fps) / 1000.0
-    elapsed += dt
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    keys = pygame.key.get_pressed()
-
-    throttle = 1.0 if keys[pygame.K_SPACE] else 0.0
-
-    target = 800 + throttle * (7300 - 800)
-
-    # tau_up = np.interp(
-    #     rpm,
-    #     [800, 3000, 7300],
-    #     [0.40, 0.30, 0.20]
-    # )
-
-    # tau_down = np.interp(
-    #     rpm,
-    #     [800, 7300],
-    #     [0.50, 0.70]
-    # )
-
-    # tau = tau_up if target > rpm else tau_down
-
-    # rpm += (target - rpm) * dt / tau
+def update_rpm(rpm: float, throttle: float, dt: float) -> float:
+    """Advance the simulated RPM by one frame."""
     inertia = 0.045
-
     torque = throttle * np.interp(
         rpm,
         [800, 2000, 4800, 7300],
         [320, 420, 540, 460]
     )
-
     engine_brake = 0.015 * rpm
-
     drpm = (torque - engine_brake) / inertia
+    return float(np.clip(rpm + drpm * dt, MIN_RPM, MAX_RPM))
 
-    rpm += drpm * dt
-    rpm = np.clip(rpm, 800, 7300)
-    rpm_history.append(rpm)
 
-    print(f"\rRPM: {rpm:.0f}", end="")
+def simulate_interactive(duration: float = DURATION, fps: int = FPS) -> np.ndarray:
+    """Collect an RPM curve while the space key controls the throttle."""
+    pygame.init()
+    pygame.display.set_mode((300, 100))
+    clock = pygame.time.Clock()
 
-pygame.quit()
-rpm_history = np.array(rpm_history)
+    rpm = float(MIN_RPM)
+    rpm_history: list[float] = []
+    running = True
+    elapsed = 0.0
 
-times_rpm = np.arange(len(rpm_history)) / fps
+    try:
+        while running and elapsed < duration:
+            dt = clock.tick(fps) / 1000.0
+            elapsed += dt
 
-t_audio = np.arange(int(duration * sr)) / sr
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
-rpm_interp = np.interp(
-    t_audio,
-    times_rpm,
-    rpm_history
-)
-sr = 44100
+            throttle = 1.0 if pygame.key.get_pressed()[pygame.K_SPACE] else 0.0
+            rpm = update_rpm(rpm, throttle, dt)
+            rpm_history.append(rpm)
+            print(f"\rRPM: {rpm:.0f}", end="")
+    finally:
+        pygame.quit()
 
-rms = np.interp(
-    rpm_interp,
-    [800, 7300],
-    [0.3, 1.0]
-)
-dummy = np.zeros_like(rpm_interp)
+    return np.asarray(rpm_history)
 
-jitter = (
-    8*np.sin(2*np.pi*6*times_rpm)
-    + 4*np.sin(2*np.pi*13*times_rpm)
-)
 
-rpm += jitter
+def synthesize_engine(
+    rpm_history: np.ndarray,
+    duration: float = DURATION,
+    sr: int = SAMPLE_RATE,
+    fps: int = FPS,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Interpolate the RPM curve and synthesize the engine sound."""
+    times_rpm = np.arange(len(rpm_history)) / fps
+    t_audio = np.arange(int(duration * sr)) / sr
+    rpm_interp = np.interp(t_audio, times_rpm, rpm_history)
+    rms = np.interp(rpm_interp, [MIN_RPM, MAX_RPM], [0.3, 1.0])
 
-engine, rpm_interp, phase = process_engine(
-    rpm_interp,
-    rms,
-    sr
-)
+    engine, rpm_interp, phase = process_engine(rpm_interp, rms, sr)
+    engine = effect_engine(np.asarray(engine), rpm_interp, phase, sr)
+    engine /= np.max(np.abs(engine))
+    return engine, rpm_interp
 
-engine = effect_engine(np.asarray(engine), rpm_interp, phase, sr)
 
-engine /= np.max(np.abs(engine))
+def plot_spectrogram(engine: np.ndarray, sr: int = SAMPLE_RATE) -> None:
+    """Display the generated engine sound's spectrogram."""
+    frequencies, times, spectrum = spectrogram(engine, sr, nperseg=2048)
+    plt.pcolormesh(
+        times,
+        frequencies,
+        10 * np.log10(spectrum + 1e-12),
+        shading="gouraud"
+    )
+    plt.ylim(0, 5000)
+    plt.ylabel("Hz")
+    plt.xlabel("Time")
+    plt.colorbar()
+    plt.show()
 
-# print(np.max(np.abs(engine)))
-# print(np.percentile(np.abs(engine), 99))
-# print(np.percentile(np.abs(engine), 99.9))
 
-sf.write("simulator.wav", engine, int(sr))
+def main() -> None:
+    rpm_history = simulate_interactive()
+    engine, _ = synthesize_engine(rpm_history)
+    sf.write("simulator.wav", engine, SAMPLE_RATE)
+    plot_spectrogram(engine)
 
-f, t, S = spectrogram(
-    engine,
-    sr,
-    nperseg=2048
-)
 
-plt.pcolormesh(
-    t,
-    f,
-    10*np.log10(S + 1e-12),
-    shading="gouraud"
-)
-
-plt.ylim(0,5000)
-plt.ylabel("Hz")
-plt.xlabel("Time")
-plt.colorbar()
-plt.show()
+if __name__ == "__main__":
+    main()
