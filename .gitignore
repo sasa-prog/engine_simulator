@@ -218,6 +218,10 @@ poetry.toml
 # ruff
 .ruff_cache/
 
+# Generated audio and local test outputs
+*.wav
+outputs/
+
 # LSP config files
 pyrightconfig.json
 

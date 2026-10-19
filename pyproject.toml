@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "engine-simulator"
+version = "0.1.0"
+description = "Experiments for synthesizing engine sounds from RPM and audio signals"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "librosa",
+    "soundfile",
+    "matplotlib",
+    "pygame",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.setuptools]
+py-modules = [
+    "audio_utils",
+    "effects",
+    "engine",
+    "engine_simulator",
+    "main",
+    "rpm_simulator",
+    "signal_processor",
+    "simulator",
+    "stft",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

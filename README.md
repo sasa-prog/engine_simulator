@@ -12,10 +12,16 @@
 - Matplotlib
 - Pygame（リアルタイムRPMシミュレーションを使う場合）
 
-依存パッケージは次のようにインストールできます。
+依存パッケージは `pyproject.toml` からインストールできます。
 
 ```bash
-python -m pip install numpy scipy librosa soundfile matplotlib pygame
+python -m pip install -e .
+```
+
+開発用ツールもインストールする場合は、次を実行します。
+
+```bash
+python -m pip install -e ".[dev]"
 ```
 
 ## 使い方
@@ -45,6 +51,8 @@ python simulator.py
 生成物:
 
 - `simulator.wav`: シミュレーションされたエンジン音
+
+生成されたWAVファイルはリポジトリ直下に出力されます。これらは `.gitignore` の対象です。
 
 `rpm_simulator.py` はRPM変化だけを確認する簡易シミュレーターです。
 
@@ -97,4 +105,5 @@ WAV出力（SoundFile）
 - 実行時にグラフウィンドウが表示されるスクリプトがあります。ウィンドウを閉じると処理が進みます。
 - `engine.py` と `stft.py` は入力ファイル名をソースコード内に直接指定しています。
 - 生成されたWAVファイルは既存ファイルを上書きします。
-- このリポジトリには自動テストや固定のパッケージ管理ファイルはまだありません。
+- `pyproject.toml` に実行用依存関係と開発用ツールを定義しています。
+- 自動テストは今後追加予定です。
